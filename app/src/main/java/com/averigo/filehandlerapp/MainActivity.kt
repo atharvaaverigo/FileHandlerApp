@@ -68,48 +68,50 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnDownload.setOnClickListener {
-            val dwCall = instance.downloadFile(
-                "8a9R7mNcA3eLxuQlVLUtei5SDm7iXGKLG7FSKOEgS94UEexChOaWBDU3Kl3O",
-                "$fileName.txt"
-            )
-            dwCall.enqueue(object : retrofit2.Callback<ResponseBody> {
-                override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>
-                ) {
-                    if (response.isSuccessful) {
-                        val res = response.body()
-                        val documentsPath: String? = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)?.absolutePath
-                        val dirPath: String = applicationContext.getExternalFilesDir(null)!!.absolutePath
-                        val filePath: String = dirPath
-                        saveFile(res, "$filePath","$fileName.txt")
-                        Log.d("fileNameA", "$filePath/$fileName.txt")
+            if (fileName.isNotEmpty()) {
+                val dwCall = instance.downloadFile(
+                    "8a9R7mNcA3eLxuQlVLUtei5SDm7iXGKLG7FSKOEgS94UEexChOaWBDU3Kl3O",
+                    "$fileName.txt"
+                )
+                dwCall.enqueue(object : retrofit2.Callback<ResponseBody> {
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+                        if (response.isSuccessful) {
+                            val res = response.body()
+                            val documentsPath: String? = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)?.absolutePath
+                            val dirPath: String = applicationContext.getExternalFilesDir(null)!!.absolutePath
+                            val filePath: String = dirPath
+                            saveFile(res, "$filePath","$fileName.txt")
+                            Log.d("fileNameA", "$filePath/$fileName.txt")
 
-                    } else {
-                        Toast.makeText(applicationContext, "Error: ${response.message()}", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(applicationContext, "Error: ${response.message()}", Toast.LENGTH_SHORT).show()
+                        }
                     }
-                }
 
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    Toast.makeText(applicationContext, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
-                }
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        Toast.makeText(applicationContext, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+                    }
 
-            })
-
+                })
+            } else {
+                Toast.makeText(applicationContext, "File name is not provided", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
 
-    fun saveFile(body: ResponseBody?, pathWhereYouWantToSaveFile: String, fileName: String): String {
+    fun saveFile(body: ResponseBody?, pathWhereYouWantToSaveFile: String, fileName: String) {
         // Return an empty string if the body is null
         if (body == null) {
             Log.e("saveFile", "ResponseBody is null")
-            return ""
         }
 
         var input: InputStream? = null
-        return try {
-            input = body.byteStream()
+        try {
+            input = body!!.byteStream()
 
             // Make sure the file path ends with a separator (e.g. '/')
             val fullFilePath = if (pathWhereYouWantToSaveFile.endsWith("/")) {
@@ -131,10 +133,9 @@ class MainActivity : AppCompatActivity() {
                 }
                 output.flush() // Not strictly necessary with 'use', but good practice
             }
-            fullFilePath // Return the full path where the file is saved
+            Toast.makeText(applicationContext, "File Downloaded Successfully", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Log.e("saveFile", "Error saving file: ${e.message}")
-            "" // Return an empty string on error
         } finally {
             input?.close() // Close input stream in the finally block
         }
